@@ -79,3 +79,4 @@ monitoring/prometheus_data/
 htmlcov/
 .pytest_cache/
 
+/processed_data
