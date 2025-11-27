@@ -39,6 +39,8 @@ processed_data/*.parquet
 models/*.pkl
 models/*.joblib
 models/*.h5
+models/*.json
+models/*_features.json
 
 # DVC
 .dvc/tmp

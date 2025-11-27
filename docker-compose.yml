@@ -10,7 +10,7 @@ x-airflow-common:
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__API__AUTH_BACKEND: 'airflow.api.auth.backend.basic_auth'
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
-    _PIP_ADDITIONAL_REQUIREMENTS: 'requests pandas numpy pyarrow mlflow-skinny pydantic<2.0.0 protobuf<5.0.0 boto3'
+    _PIP_ADDITIONAL_REQUIREMENTS: 'requests pandas numpy pyarrow mlflow-skinny pydantic<2.0.0 protobuf<5.0.0 boto3 scikit-learn joblib dvc[s3]'
     S3_ENDPOINT_URL: 'http://minio:9000'
     S3_BUCKET_NAME: 'lahore-weather-data'
     MINIO_ACCESS_KEY: 'minioadmin'
@@ -20,6 +20,8 @@ x-airflow-common:
     - ./scripts:/opt/airflow/scripts
     - ./raw_data:/opt/airflow/raw_data
     - ./processed_data:/opt/airflow/processed_data
+    - ./models:/opt/airflow/models
+    - ./mlruns:/opt/airflow/mlruns
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
   user: "${AIRFLOW_UID:-50000}:0"

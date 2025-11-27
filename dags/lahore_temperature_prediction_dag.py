@@ -530,6 +530,105 @@ load_to_storage_task = PythonOperator(
     """,
 )
 
+# Task 6: DVC Version Data (Step 3)
+dvc_version_data_task = PythonOperator(
+    task_id='dvc_version_data',
+    python_callable=dvc_add_and_push_task,
+    dag=dag,
+    doc_md="""
+    ### DVC Data Versioning (Step 3)
+    
+    Versions processed dataset using DVC:
+    - Adds processed data to DVC tracking
+    - Pushes data to remote storage (MinIO/S3)
+    - Commits .dvc metadata file to Git
+    
+    **Outputs:**
+    - Data versioned in DVC
+    - .dvc metadata file created
+    - Data pushed to remote storage
+    """,
+)
+
+# Task 7: Model Training (Step 4 - Phase II)
+def train_model_task(**context):
+    """
+    Wrapper function to call train.py script for model training.
+    Integrates with MLflow for experiment tracking.
+    """
+    from scripts.train import train_and_log_experiment
+    
+    print("\n" + "="*60)
+    print("TASK 7: MODEL TRAINING (PHASE II - STEP 4)")
+    print("="*60 + "\n")
+    
+    # Get collection time from XCom
+    ti = context['ti']
+    collection_time = ti.xcom_pull(task_ids='extract_weather_data', key='collection_time')
+    
+    print(f"Training model with data from: {collection_time}")
+    
+    # Train model with MLflow tracking
+    result = train_and_log_experiment(
+        model_type='random_forest',
+        hyperparams={
+            'n_estimators': 100,
+            'max_depth': 10,
+            'min_samples_split': 2,
+            'random_state': 42
+        },
+        run_name=f"airflow_training_{collection_time}"
+    )
+    
+    # Push results to XCom
+    ti.xcom_push(key='model_path', value=result['model_path'])
+    ti.xcom_push(key='mlflow_run_id', value=result['run_id'])
+    ti.xcom_push(key='test_rmse', value=result['metrics']['test_rmse'])
+    ti.xcom_push(key='test_mae', value=result['metrics']['test_mae'])
+    ti.xcom_push(key='test_r2', value=result['metrics']['test_r2'])
+    
+    print(f"\n[OK] Model training complete!")
+    print(f"  MLflow Run ID: {result['run_id']}")
+    print(f"  Test RMSE: {result['metrics']['test_rmse']:.4f}")
+    print(f"  Test MAE: {result['metrics']['test_mae']:.4f}")
+    print(f"  Test R²: {result['metrics']['test_r2']:.4f}")
+    
+    return result['run_id']
+
+train_model_task_op = PythonOperator(
+    task_id='train_model',
+    python_callable=train_model_task,
+    dag=dag,
+    doc_md="""
+    ### Model Training with MLflow (Phase II - Step 4)
+    
+    Trains machine learning model for temperature prediction:
+    - Loads processed data from previous task
+    - Trains Random Forest Regressor (4-hour ahead prediction)
+    - Logs all hyperparameters, metrics, and model to MLflow
+    - Integrates with Dagshub as central MLflow tracking server
+    
+    **Model Details:**
+    - Algorithm: Random Forest Regressor
+    - Target: Temperature 4 hours ahead
+    - Features: Lag features, rolling means, time encodings
+    
+    **MLflow Tracking:**
+    - Hyperparameters: n_estimators, max_depth, etc.
+    - Metrics: RMSE, MAE, R² (train & test)
+    - Artifacts: Trained model, feature importance
+    
+    **Outputs:**
+    - Model logged to MLflow Model Registry
+    - Metrics pushed to XCom for downstream tasks
+    - Local model backup saved
+    
+    **Configuration:**
+    - MLFLOW_TRACKING_URI: Set to Dagshub URL or local
+    - MLFLOW_EXPERIMENT_NAME: Experiment name for grouping runs
+    """,
+)
+
 # Define task dependencies
-extract_task >> quality_check_task >> transform_task >> profiling_task >> load_to_storage_task
+extract_task >> quality_check_task >> transform_task >> profiling_task >> load_to_storage_task >> dvc_version_data_task >> train_model_task_op
 
