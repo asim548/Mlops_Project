@@ -41,7 +41,8 @@ models/*.joblib
 models/*.h5
 
 # DVC
-.dvc/
+.dvc/tmp
+.dvc/cache
 .dvcignore
 
 # MLflow
