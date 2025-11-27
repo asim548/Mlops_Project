@@ -1,0 +1,32 @@
+# Code Owners for Lahore Temperature Prediction MLOps Project
+# 
+# These owners will be automatically requested for review when someone 
+# opens a pull request that modifies code in specific directories or files.
+#
+# More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything in the repo
+* @asim548
+
+# Data pipeline and ETL
+/dags/ @asim548
+/scripts/transform_data.py @asim548
+/scripts/load_to_cloud_storage.py @asim548
+
+# Model training and ML code
+/scripts/train.py @asim548
+/scripts/test_training_standalone.py @asim548
+
+# Infrastructure and deployment
+/docker-compose.yml @asim548
+/Dockerfile @asim548
+/.github/ @asim548
+
+# Documentation
+/*.md @asim548
+/docs/ @asim548
+
+# Configuration files
+/requirements.txt @asim548
+/.dvc/ @asim548
+
